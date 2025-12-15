@@ -1,0 +1,6 @@
+{
+  "name": "gmail-studio",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Browser-compatible Gmail resolver for agentlang"
+}
