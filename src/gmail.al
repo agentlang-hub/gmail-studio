@@ -2,6 +2,15 @@ module gmail
 
 import "resolver.js" @as gmr
 
+entity GmailConfig {
+  id UUID @id @default(uuid()),
+  gmailClientId String,
+  gmailClientSecret String,
+  gmailRefreshToken String,
+  gmailPollIntervalMinutes Int @optional,
+  gmailPollMinutes Int @optional
+}
+
 entity Attachments {
     filename String @optional,
     mime_type String @optional,
