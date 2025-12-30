@@ -1,4 +1,4 @@
-# Gmail Studio Resolver
+# Gmail Resolver
 
 A comprehensive Agentlang resolver for Gmail integration, providing full CRUD operations and real-time subscriptions for emails, labels, and attachments.
 
