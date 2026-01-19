@@ -129,8 +129,6 @@ async function getAccessToken() {
       grant_type: "refresh_token",
     });
 
-    console.log(`GMAIL RESOLVER: Fetching access token from ${tokenUrl}`);
-
     const response = await fetch(tokenUrl, {
       method: "POST",
       headers: {
@@ -156,9 +154,6 @@ async function getAccessToken() {
     // Set expiry time (subtract 5 minutes for safety)
     tokenExpiry = Date.now() + ((tokenData.expires_in || 3600) - 300) * 1000;
 
-    console.log(
-      `GMAIL RESOLVER: Successfully obtained access token, expires in ${tokenData.expires_in} seconds`,
-    );
     return accessToken;
   } catch (error) {
     console.error(`GMAIL RESOLVER: Failed to get access token: ${error}`);
@@ -192,10 +187,6 @@ const makeRequest = async (endpoint, options = {}) => {
     },
   };
 
-  console.log(
-    `GMAIL RESOLVER: making http request ${options.method} ${url} with options ${JSON.stringify(options)}`,
-  );
-
   const config = { ...defaultOptions, ...options };
 
   // Remove Content-Type header for GET requests without body
@@ -219,10 +210,6 @@ const makeRequest = async (endpoint, options = {}) => {
     });
 
     const body = await getResponseBody(response);
-    console.log(
-      `GMAIL RESOLVER: response ${response.status} ${response.ok}`,
-      body,
-    );
 
     clearTimeout(timeoutId);
 
@@ -266,12 +253,10 @@ const makeRequest = async (endpoint, options = {}) => {
 };
 
 const makeGetRequest = async (endpoint) => {
-  console.log(`GMAIL RESOLVER: Querying Gmail: ${endpoint}\n`);
   return await makeRequest(endpoint, { method: "GET" });
 };
 
 const makePostRequest = async (endpoint, body) => {
-  console.log(`GMAIL RESOLVER: Creating in Gmail: ${endpoint}\n`);
   return await makeRequest(endpoint, {
     method: "POST",
     body: JSON.stringify(body),
@@ -279,7 +264,6 @@ const makePostRequest = async (endpoint, body) => {
 };
 
 const makePatchRequest = async (endpoint, body) => {
-  console.log(`GMAIL RESOLVER: Updating in Gmail: ${endpoint}\n`);
   return await makeRequest(endpoint, {
     method: "PATCH",
     body: JSON.stringify(body),
@@ -287,7 +271,6 @@ const makePatchRequest = async (endpoint, body) => {
 };
 
 const makeDeleteRequest = async (endpoint) => {
-  console.log(`GMAIL RESOLVER: Deleting from Gmail: ${endpoint}\n`);
   return await makeRequest(endpoint, { method: "DELETE" });
 };
 
@@ -336,7 +319,6 @@ export const queryEmail = async (env, attrs) => {
   const id =
     attrs.queryAttributeValues?.get("__path__")?.split("/")?.pop() ?? null;
 
-  console.log(`GMAIL RESOLVER: Querying Gmail: ${id}\n`);
   try {
     let inst;
     if (id) {
@@ -462,7 +444,6 @@ export const queryLabel = async (env, attrs) => {
   const id =
     attrs.queryAttributeValues?.get("__path__")?.split("/")?.pop() ?? null;
 
-  console.log(`GMAIL RESOLVER: Querying Gmail: ${id}\n`);
   try {
     let inst;
     if (id) {
@@ -673,9 +654,6 @@ async function getAndProcessRecords(resolver, entityType) {
 
         const searchQuery = `after:${afterTimestamp}`;
         endpoint = `/gmail/v1/users/me/messages?maxResults=100&q=${encodeURIComponent(searchQuery)}`;
-        console.log(
-          `GMAIL RESOLVER: Polling emails from last ${pollMinutes} minutes (after timestamp: ${afterTimestamp})`,
-        );
         break;
       case "labels":
         endpoint = "/gmail/v1/users/me/labels";
@@ -690,7 +668,6 @@ async function getAndProcessRecords(resolver, entityType) {
     if (entityType === "emails" && result.messages) {
       for (let i = 0; i < result.messages.length; ++i) {
         const message = result.messages[i];
-        console.log(`GMAIL RESOLVER: Processing email ${message.id}`);
 
         // Get full message details
         const messageDetail = await makeGetRequest(
@@ -710,7 +687,6 @@ async function getAndProcessRecords(resolver, entityType) {
     } else if (entityType === "labels" && result.labels) {
       for (let i = 0; i < result.labels.length; ++i) {
         const label = result.labels[i];
-        console.log(`GMAIL RESOLVER: Processing label ${label.id}`);
 
         const mappedData = toLabel(label);
         const entityInstance = asInstance(mappedData, "Label");
@@ -725,12 +701,10 @@ async function getAndProcessRecords(resolver, entityType) {
 }
 
 async function handleSubsEmails(resolver) {
-  console.log("GMAIL RESOLVER: Fetching emails for subscription...");
   await getAndProcessRecords(resolver, "emails");
 }
 
 async function handleSubsLabels(resolver) {
-  console.log("GMAIL RESOLVER: Fetching labels for subscription...");
   await getAndProcessRecords(resolver, "labels");
 }
 
@@ -739,9 +713,7 @@ export async function subsEmails(resolver) {
   const intervalMinutes =
     parseInt(getLocalEnv("GMAIL_POLL_INTERVAL_MINUTES")) || 15;
   const intervalMs = intervalMinutes * 60 * 1000;
-  console.log(
-    `GMAIL RESOLVER: Setting emails polling interval to ${intervalMinutes} minutes`,
-  );
+
   setInterval(async () => {
     await handleSubsEmails(resolver);
   }, intervalMs);
@@ -752,9 +724,7 @@ export async function subsLabels(resolver) {
   const intervalMinutes =
     parseInt(getLocalEnv("GMAIL_POLL_INTERVAL_MINUTES")) || 15;
   const intervalMs = intervalMinutes * 60 * 1000;
-  console.log(
-    `GMAIL RESOLVER: Setting labels polling interval to ${intervalMinutes} minutes`,
-  );
+
   setInterval(async () => {
     await handleSubsLabels(resolver);
   }, intervalMs);
